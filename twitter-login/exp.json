@@ -1,9 +1,9 @@
 {
   "name": "twitter-login",
-  "description": "An empty new project",
+  "description": "Twitter login example",
   "slug": "twitter-login",
   "privacy": "public",
-  "sdkVersion": "12.0.0",
+  "sdkVersion": "UNVERSIONED",
   "version": "1.0.0",
   "orientation": "portrait",
   "primaryColor": "#cccccc",

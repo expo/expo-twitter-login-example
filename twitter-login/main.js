@@ -7,12 +7,33 @@ import {
   Button,
 } from 'react-native';
 
+type RedirectResult = {
+  type: 'cancel',
+} | {
+  type: 'success',
+  response: string,
+};
+
 class App extends React.Component {
 
   _loginWithTwitter = async ()=> {
     //Call your backend to get the redirect URL with its authorization header containing a signature.
-    let redirectURL = await fetch('http://localhost:3000/getRedirectURL', { method: 'GET' });
-    console.warn(redirectURL);
+    let redirectURLRequest = await fetch('http://localhost:3000/getRedirectURL',
+                                  { method: 'GET',
+                                   headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }});
+    let redirectURL = JSON.parse(redirectURLRequest._bodyText)['redirectURL'];
+    let redirectResult = this._redirect(redirectURL);
+    if (redirectResult.type === 'cancel') {
+      return ['TWITTER ERROR', 'Twitter redirection failure'];
+    }
+
+  }
+
+  _redirect = async (authURL:string):Promise<RedirectResult> => {
+    let redirectResult = await Exponent.Twitter.redirect(
+      authURL,
+    );
+    return redirectResult;
   }
 
   render() {

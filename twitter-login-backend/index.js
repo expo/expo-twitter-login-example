@@ -19,6 +19,8 @@ app.listen(3000, function (){
 });
 
 app.get('/getRedirectURL', function(req, res){
+  //Set response to JSON
+  res.setHeader('Content-Type', 'application/json');
   const requestTokenURL = '/oauth/request_token';
   const authorizationURL = '/oauth/authorize';
   const accessURL = '/oauth/access_token';
@@ -47,7 +49,6 @@ app.get('/getRedirectURL', function(req, res){
     return response.text();
   }).then(response =>{
     let textResponse = response;
-    console.log(textResponse);
     let arrayOfResponseKeyValuePairs = textResponse.split('&');
     let dictionaryOfKeyValuePairs = {};
     for (let keyPair of arrayOfResponseKeyValuePairs) {
@@ -59,7 +60,7 @@ app.get('/getRedirectURL', function(req, res){
 
     //Token Authorization, send the URL to the native app to then display in 'Webview'
     let authURL = baseURL + authorizationURL + '?oauth_token=' + authToken;
-    res.send(authURL);
+    res.json({redirectURL:authURL});
   });
 });
 
@@ -105,7 +106,6 @@ function createSignature(params, HTTPMethod, requestURL, twitterConsumerSecret, 
   } else {
     signingKey = percentEncodedConsumerSecret + '&';
     }
-  console.log(signatureBaseString);
   let signature = Crypto.HmacSHA1(signatureBaseString, signingKey);
   let encodedSignature = Crypto.enc.Base64.stringify(signature);
   return encodedSignature;
