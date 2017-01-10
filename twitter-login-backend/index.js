@@ -7,6 +7,16 @@ var app = express()
 const twitterConsumerSecret = 'QD21zYutGb3fAo3ajzu1P3U3EZYVP2PoPChj8LoCup2EKWNjqG';
 const twitterConsumerKey = 'WV9aXjxc8U8Fc9uJh2pGFo6pD';
 
+//URL + Routes
+const requestTokenURL = '/oauth/request_token';
+const authorizationURL = '/oauth/authorize';
+const accessURL = '/oauth/access_token';
+const baseURL = 'https://api.twitter.com';
+
+//Twitter tokens
+let authToken;
+let authTokenSecret;
+
 //Callback URL of your application, change if standalone. Otherwise this is the one for in Exponent apps.
 const callbackURL = 'host.exp.exponent://oauthredirect';
 
@@ -18,13 +28,9 @@ app.listen(3000, function (){
   console.log('Twitter login app listening port 3000')
 });
 
-app.get('/getRedirectURL', function(req, res){
+app.get('/redirect_url', function(req, res){
   //Set response to JSON
   res.setHeader('Content-Type', 'application/json');
-  const requestTokenURL = '/oauth/request_token';
-  const authorizationURL = '/oauth/authorize';
-  const accessURL = '/oauth/access_token';
-  const baseURL = 'https://api.twitter.com';
 
   //Request Token
   //Creates base header + Request URL
@@ -55,12 +61,48 @@ app.get('/getRedirectURL', function(req, res){
         let keyPairArray = keyPair.split('=');
         dictionaryOfKeyValuePairs[keyPairArray[0]] = keyPairArray[1];
     }
-    const authToken = dictionaryOfKeyValuePairs['oauth_token'];
-    const authTokenSecret = dictionaryOfKeyValuePairs['oauth_token_secret'];
+    authToken = dictionaryOfKeyValuePairs['oauth_token'];
+    authTokenSecret = dictionaryOfKeyValuePairs['oauth_token_secret'];
 
     //Token Authorization, send the URL to the native app to then display in 'Webview'
     let authURL = baseURL + authorizationURL + '?oauth_token=' + authToken;
     res.json({redirectURL:authURL});
+  });
+});
+
+//Requires oauth_verifier
+app.get('/access_token', function(req, res){
+  let verifier = req.query.oauth_verifier
+  //Creates base header + Access Token URL
+  let accessTokenHeaderParams = createHeaderBase();
+  let accessTokenURL = baseURL + accessURL;
+
+  //Add additional parameters for signature + Consumer Key
+  accessTokenHeaderParams['oauth_consumer_key'] = twitterConsumerKey;
+  accessTokenHeaderParams['oauth_token'] = authToken;
+  accessTokenHeaderParams['oauth_token_secret'] = authTokenSecret;
+
+  let accessTokenSignature = createSignature(accessTokenHeaderParams, 'POST', accessTokenURL, twitterConsumerSecret);
+  accessTokenHeaderParams['oauth_signature'] = accessTokenSignature;
+
+  //Creates the Header String, adds the oauth verfier
+  let accessTokenHeaderString = createHeaderString(accessTokenHeaderParams);
+  let verifierKeyValue = ', oauth_verifier="' + encodeURIComponent(verifier) + '"';
+  let accessTokenRequestHeader = accessTokenHeaderString + verifierKeyValue;
+
+  //Convert token to Access Token
+  nodeFetch(accessTokenURL, {method:'POST', headers:{ Authorization:accessTokenRequestHeader }})
+  .then(response =>{
+    return response.text();
+  }).then(response =>{
+    let accessTokenTextResponse = response;
+    let arrayOfAccessKeyValuePairs = accessTokenTextResponse.split('&');
+    let dictionaryOfAccessKeyValuePairs = {};
+    for (let keyPair of arrayOfAccessKeyValuePairs) {
+        let keyPairArray = keyPair.split('=');
+        dictionaryOfAccessKeyValuePairs[keyPairArray[0]] = keyPairArray[1];
+    }
+    res.json({accessTokenResponse:dictionaryOfAccessKeyValuePairs});
   });
 });
 
