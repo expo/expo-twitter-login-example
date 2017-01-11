@@ -21,10 +21,6 @@ let authTokenSecret;
  // Callback URL of your application, change if standalone. Otherwise this is the one for in Exponent apps.
 const callbackURL = 'host.exp.exponent://oauthredirect';
 
-app.get('/', (req, res) => {
-  res.send('Hello!');
-});
-
 app.listen(3000, () => {
   console.log('Twitter login app listening port 3000');
 });
