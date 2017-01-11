@@ -9,7 +9,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "crypto-js": "^3.1.9-1",
     "express": "^4.14.0",
     "node-fetch": "^1.6.3"
+  },
+  "devDependencies": {
+    "anf-scripts": "^0.3.0",
+    "eslint": "^3.13.1",
+    "eslint-config-anf": "^0.4.4"
   }
 }
