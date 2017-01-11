@@ -50,7 +50,7 @@ class App extends React.Component {
   }
 
   _redirect = async (authURL:string):Promise => {
-    let redirectResult = await Exponent.Twitter.redirect(
+    let redirectResult = await Exponent.OAuth.redirect(
       authURL,
     );
     return redirectResult;
