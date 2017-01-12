@@ -1,6 +1,7 @@
 import Exponent from 'exponent';
 import React from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -18,14 +19,17 @@ class App extends React.Component {
 
   _loginWithTwitter = async (): Promise => {
     // Call your backend to get the redirect URL, Exponent will take care of redirecting the user.
-    const redirectURLRequest = await fetch(redirectURLEndpoint,
-      { method: 'GET',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
-    const redirectURL = JSON.parse(redirectURLRequest._bodyText).redirectURL;
-    const redirectResult = await this._redirect(redirectURL);
+    const redirectURL = await fetch(redirectURLEndpoint, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    }).then(res => res.json());
+
+    const redirectResult = await Exponent.OAuth.redirect(redirectURL);
     if (redirectResult.type === 'cancel') {
-      return ['TWITTER ERROR', 'Twitter redirection failure'];
+      Alert.alert('User canceled');
+      return;
     }
+
     // Once redirected, we need the verifier to convert our token to an access token
     const redirectResponse = redirectResult.response;
     const redirectSplit = redirectResponse.split('?');
@@ -39,36 +43,24 @@ class App extends React.Component {
     const verifier = dictionaryOfRedirectKeyValuePairs.oauth_verifier;
     const accessTokenURL = accessTokenEndpoint + this._toQueryString({ oauth_verifier: verifier });
 
-    const accessTokenRequest = await fetch(accessTokenURL, { method: 'GET', headers: { Accept: 'application/json' } });
-    const accessTokenResponse = JSON.parse(accessTokenRequest._bodyText).accessTokenResponse;
-    const userId = accessTokenResponse.user_id;
-    const username = accessTokenResponse.screen_name;
-    const authToken = accessTokenResponse.oauth_token;
-    const authTokenSecret = accessTokenResponse.oauth_token_secret;
-    if (userId !== undefined) {
-      this.setState({ username });
-      return { type: 'success', userId, username, authToken, authTokenSecret };
-    }
-    return { type: 'cancel' };
-  }
+    const accessTokenResult = await fetch(accessTokenURL, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    }).then(res => res.json());
 
-  _redirect = async (authURL: string): Promise => {
-    const redirectResult = await Exponent.OAuth.redirect(
-      authURL,
-    );
-    return redirectResult;
+    const accessTokenResponse = accessTokenResult.accessTokenResponse;
+    const username = accessTokenResponse.screen_name;
+
+    this.setState({ username });
   }
 
   /**
- * Converts an object to a query string.
- */
+   * Converts an object to a query string.
+   */
   _toQueryString(params: Object): string {
-    let result = '?';
-    for (const [key, value] of Object.entries(params)) {
-    // $FlowFixMe
-      result += `${encodeURIComponent(key)}=${encodeURIComponent(value)}&`;
-    }
-    return result.slice(0, -1);
+    return '?' + Object.entries(params)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
   }
 
   render() {

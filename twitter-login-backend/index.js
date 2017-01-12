@@ -1,3 +1,5 @@
+/* eslint-disable babel/new-cap, no-console */
+
 const express = require('express');
 const nodeFetch = require('node-fetch');
 const Crypto = require('crypto-js');
@@ -15,6 +17,7 @@ const accessURL = '/oauth/access_token';
 const baseURL = 'https://api.twitter.com';
 
 // Twitter tokens
+// TODO: Server can't have state here, need to be passed by clients.
 let authToken;
 let authTokenSecret;
 
@@ -46,25 +49,19 @@ app.get('/redirect_url', (req, res) => {
   const headerString = createHeaderString(tokenRequestHeaderParams);
   const callbackKeyValue = ', oauth_callback="' + encodeURIComponent(callbackURL) + '"';
   const tokenRequestHeader = headerString + callbackKeyValue;
-    // Request
+  // Request
   nodeFetch(tokenRequestURL, { method: 'POST', headers: { Authorization: tokenRequestHeader } })
-  .then(response => {
-    return response.text();
-  }).then(response => {
-    const textResponse = response;
-    const arrayOfResponseKeyValuePairs = textResponse.split('&');
-    const dictionaryOfKeyValuePairs = {};
-    for (const keyPair of arrayOfResponseKeyValuePairs) {
-      const keyPairArray = keyPair.split('=');
-      dictionaryOfKeyValuePairs[keyPairArray[0]] = keyPairArray[1];
-    }
-    authToken = dictionaryOfKeyValuePairs.oauth_token;
-    authTokenSecret = dictionaryOfKeyValuePairs.oauth_token_secret;
+    .then(response => {
+      return response.text();
+    }).then(response => {
+      const tokenResponse = parseFormEncoding(response);
+      authToken = tokenResponse.oauth_token;
+      authTokenSecret = tokenResponse.oauth_token_secret;
 
-    // Token Authorization, send the URL to the native app to then display in 'Webview'
-    const authURL = baseURL + authorizationURL + '?oauth_token=' + authToken;
-    res.json({ redirectURL: authURL });
-  });
+      // Token Authorization, send the URL to the native app to then display in 'Webview'
+      const authURL = baseURL + authorizationURL + '?oauth_token=' + authToken;
+      res.json({ redirectURL: authURL });
+    });
 });
 
 // Requires oauth_verifier
@@ -92,63 +89,63 @@ app.get('/access_token', (req, res) => {
   .then(response => {
     return response.text();
   }).then(response => {
-    const accessTokenTextResponse = response;
-    const arrayOfAccessKeyValuePairs = accessTokenTextResponse.split('&');
-    const dictionaryOfAccessKeyValuePairs = {};
-    for (const keyPair of arrayOfAccessKeyValuePairs) {
-      const keyPairArray = keyPair.split('=');
-      dictionaryOfAccessKeyValuePairs[keyPairArray[0]] = keyPairArray[1];
-    }
-    res.json({ accessTokenResponse: dictionaryOfAccessKeyValuePairs });
+    const accessTokenResponse = parseFormEncoding(response);
+    res.json({ accessTokenResponse });
   });
 });
 
+/**
+ * Parse a form encoded string into an object
+ * @param  {string} formEncoded Form encoded string
+ * @return {Object}             Decoded data object
+ */
+function parseFormEncoding(formEncoded) {
+  const pairs = formEncoded.split('&');
+  const result = {};
+  for (const pair of pairs) {
+    const [key, value] = pair.split('=');
+    result[key] = value;
+  }
+  return result;
+}
 
 /**
  * Creates the Token Request OAuth header
- * @param  {[dictionary]} params OAuth params
- * @return {[string]}            OAuth header string
+ * @param  {Object} params OAuth params
+ * @return {string}        OAuth header string
  */
 function createHeaderString(params) {
-  let headerString = 'OAuth ';
-  for (let index = 0; index < Object.keys(params).length; index++) {
-    const key = Object.keys(params)[index];
+  return 'OAuth ' + Object.keys(params).map(key => {
     const encodedKey = encodeURIComponent(key);
     const encodedValue = encodeURIComponent(params[key]);
-    headerString = headerString + encodedKey + '="' + encodedValue + '"';
-    if (index !== Object.keys(params).length - 1) {
-      headerString += ', ';
-    }
-  }
-  return headerString;
+    return `${encodedKey}="${encodedValue}"`;
+  }).join(', ');
 }
 
 /**
  * Creates the Signature for the OAuth header
- * @param  {[Dictionary]} params     OAuth + Request Parameters
- * @param  {[string]} HTTPMethod     Type of Method (POST,GET...)
- * @param  {[string]} requestURL     Full Request URL
- * @param  {[string]} twitterConsumerSecret Twitter Consumer Secret
- * @param  {[string?]} tokenSecret   Secret token (Optional)
- * @return {[string]}                Returns the encoded/hashed signature
+ * @param  {Object}  params         OAuth + Request Parameters
+ * @param  {string}  HTTPMethod     Type of Method (POST,GET...)
+ * @param  {string}  requestURL     Full Request URL
+ * @param  {string}  consumerSecret Twitter Consumer Secret
+ * @param  {?string} tokenSecret    Secret token (Optional)
+ * @return {string}                 Returns the encoded/hashed signature
  */
-function createSignature(params, HTTPMethod, requestURL, twitterConsumerSecret, tokenSecret) {
-  const percentEncodedParameters = percentEncodeParameters(params);
-  const upperCaseHTTPMethod = HTTPMethod.toUpperCase();
-  const percentEncodedRequestURL = encodeURIComponent(requestURL);
-  const percentEncodedConsumerSecret = encodeURIComponent(twitterConsumerSecret);
+function createSignature(params, httpMethod, requestURL, consumerSecret, tokenSecret) {
+  const encodedParameters = percentEncodeParameters(params);
+  const upperCaseHTTPMethod = httpMethod.toUpperCase();
+  const encodedRequestURL = encodeURIComponent(requestURL);
+  const encodedConsumerSecret = encodeURIComponent(consumerSecret);
 
   const signatureBaseString = upperCaseHTTPMethod +
-  '&' +
-  percentEncodedRequestURL +
-  '&' +
-  encodeURIComponent(percentEncodedParameters);
+    '&' + encodedRequestURL +
+    '&' + encodeURIComponent(encodedParameters);
 
   let signingKey;
   if (tokenSecret !== undefined) {
-    signingKey = percentEncodedConsumerSecret + '&' + encodeURIComponent(tokenSecret);
+    signingKey = encodedRequestURL + '&' + encodeURIComponent(tokenSecret);
   } else {
-    signingKey = percentEncodedConsumerSecret + '&';
+    signingKey = encodedConsumerSecret + '&';
   }
   const signature = Crypto.HmacSHA1(signatureBaseString, signingKey);
   const encodedSignature = Crypto.enc.Base64.stringify(signature);
@@ -157,26 +154,20 @@ function createSignature(params, HTTPMethod, requestURL, twitterConsumerSecret, 
 
 /**
  * Percent encode the OAUTH Header + Request parameters for signature
- * @param  {[dictionary]} params Dictionary of params
- * @return {String}        Percent encoded parameters string
+ * @param  {Object} params Dictionary of params
+ * @return {string}        Percent encoded parameters string
  */
 function percentEncodeParameters(params) {
-  let encodedParameters = '';
-  for (let index = 0; index < Object.keys(params).length; index += 1) {
-    const key = Object.keys(params)[index];
+  return Object.keys(params).map(key => {
     const encodedKey = encodeURIComponent(key);
     const encodedValue = encodeURIComponent(params[key]);
-    encodedParameters = encodedParameters.concat(encodedKey).concat('=').concat(encodedValue);
-    if (index !== Object.keys(params).length - 1) {
-      encodedParameters = encodedParameters.concat('&');
-    }
-  }
-  return encodedParameters;
+    return `${encodedKey}=${encodedValue}`;
+  }).join('&');
 }
 
 /**
  * Creates the header with the base parameters (Date, nonce etc...)
- * @return {header} returns a header dictionary with base fields filled.
+ * @return {Object} returns a header dictionary with base fields filled.
  */
 function createHeaderBase() {
   return {
@@ -190,7 +181,7 @@ function createHeaderBase() {
 
 /**
  * Creates a nonce for OAuth header
- * @return {[string]} nonce
+ * @return {string} nonce
  */
 function createNonce() {
   let text = '';
