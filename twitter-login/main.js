@@ -11,6 +11,10 @@ import {
 const redirectURLEndpoint = 'http://localhost:3000/redirect_url';
 const accessTokenEndpoint = 'http://localhost:3000/access_token';
 
+// Twitter tokens
+let authToken;
+let secretToken;
+
 class App extends React.Component {
 
   state = {
@@ -23,8 +27,9 @@ class App extends React.Component {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     }).then(res => res.json());
-
-    const redirectResult = await Exponent.OAuth.redirect(redirectURL);
+    authToken = redirectURL.token;
+    secretToken = redirectURL.secretToken;
+    const redirectResult = await Exponent.OAuth.redirectAsync(redirectURL.redirectURL);
     if (redirectResult.type === 'cancel') {
       Alert.alert('User canceled');
       return;
@@ -41,7 +46,11 @@ class App extends React.Component {
       dictionaryOfRedirectKeyValuePairs[redirectThirdSplit[0]] = redirectThirdSplit[1];
     }
     const verifier = dictionaryOfRedirectKeyValuePairs.oauth_verifier;
-    const accessTokenURL = accessTokenEndpoint + this._toQueryString({ oauth_verifier: verifier });
+    const accessTokenURL = accessTokenEndpoint + this._toQueryString({
+      oauth_verifier: verifier,
+      oauth_token: authToken,
+      oauth_token_secret: secretToken,
+    });
 
     const accessTokenResult = await fetch(accessTokenURL, {
       method: 'GET',

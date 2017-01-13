@@ -16,10 +16,6 @@ const authorizationURL = '/oauth/authorize';
 const accessURL = '/oauth/access_token';
 const baseURL = 'https://api.twitter.com';
 
-// Twitter tokens
-// TODO: Server can't have state here, need to be passed by clients.
-let authToken;
-let authTokenSecret;
 
  // Callback URL of your application, change if standalone. Otherwise this is the one for in Exponent apps.
 const callbackURL = 'host.exp.exponent://oauthredirect';
@@ -55,18 +51,19 @@ app.get('/redirect_url', (req, res) => {
       return response.text();
     }).then(response => {
       const tokenResponse = parseFormEncoding(response);
-      authToken = tokenResponse.oauth_token;
-      authTokenSecret = tokenResponse.oauth_token_secret;
-
+      const authToken = tokenResponse.oauth_token;
+      const authTokenSecret = tokenResponse.oauth_token_secret;
       // Token Authorization, send the URL to the native app to then display in 'Webview'
       const authURL = baseURL + authorizationURL + '?oauth_token=' + authToken;
-      res.json({ redirectURL: authURL });
+      res.json({ redirectURL: authURL, token: authToken, secretToken: authTokenSecret });
     });
 });
 
 // Requires oauth_verifier
 app.get('/access_token', (req, res) => {
   const verifier = req.query.oauth_verifier;
+  const authToken = req.query.oauth_token;
+  const secretToken = req.query.oauth_secret_token;
   // Creates base header + Access Token URL
   const accessTokenHeaderParams = createHeaderBase();
   const accessTokenURL = baseURL + accessURL;
@@ -74,7 +71,7 @@ app.get('/access_token', (req, res) => {
   // Add additional parameters for signature + Consumer Key
   accessTokenHeaderParams.oauth_consumer_key = twitterConsumerKey;
   accessTokenHeaderParams.oauth_token = authToken;
-  accessTokenHeaderParams.oauth_token_secret = authTokenSecret;
+  accessTokenHeaderParams.oauth_token_secret = secretToken;
 
   const accessTokenSignature = createSignature(accessTokenHeaderParams, 'POST', accessTokenURL, twitterConsumerSecret);
   accessTokenHeaderParams.oauth_signature = accessTokenSignature;
@@ -83,7 +80,6 @@ app.get('/access_token', (req, res) => {
   const accessTokenHeaderString = createHeaderString(accessTokenHeaderParams);
   const verifierKeyValue = ', oauth_verifier="' + encodeURIComponent(verifier) + '"';
   const accessTokenRequestHeader = accessTokenHeaderString + verifierKeyValue;
-
   // Convert token to Access Token
   nodeFetch(accessTokenURL, { method: 'POST', headers: { Authorization: accessTokenRequestHeader } })
   .then(response => {
