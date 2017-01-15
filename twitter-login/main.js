@@ -16,12 +16,11 @@ let authToken;
 let secretToken;
 
 class App extends React.Component {
-
   state = {
     username: undefined,
-  }
+  };
 
-  _loginWithTwitter = async (): Promise => {
+  _loginWithTwitter = async () => {
     // Call your backend to get the redirect URL, Exponent will take care of redirecting the user.
     const redirectURL = await fetch(redirectURLEndpoint, {
       method: 'GET',
@@ -66,7 +65,7 @@ class App extends React.Component {
   /**
    * Converts an object to a query string.
    */
-  _toQueryString(params: Object): string {
+  _toQueryString(params) {
     return '?' + Object.entries(params)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join('&');
