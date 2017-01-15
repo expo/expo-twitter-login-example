@@ -4,7 +4,6 @@ module.exports = {
     'flowtype/require-valid-file-annotation': 0,
   },
   globals: {
-    __SERVER__: true,
-    "fetch":false,
-  }
+    "fetch": false,
+  },
 };
