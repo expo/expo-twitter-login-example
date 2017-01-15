@@ -12,7 +12,6 @@
     "react-native": "git+https://github.com/exponentjs/react-native#sdk-13.0.0"
   },
   "devDependencies": {
-    "anf-scripts": "^0.3.0",
     "eslint": "^3.13.1",
     "eslint-config-anf": "^0.4.4"
   }

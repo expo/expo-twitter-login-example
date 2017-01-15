@@ -15,7 +15,6 @@
     "node-fetch": "^1.6.3"
   },
   "devDependencies": {
-    "anf-scripts": "^0.3.0",
     "eslint": "^3.13.1",
     "eslint-config-anf": "^0.4.4"
   }
