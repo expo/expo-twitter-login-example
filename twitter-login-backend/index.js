@@ -18,7 +18,7 @@ const baseURL = 'https://api.twitter.com';
 
 
  // Callback URL of your application, change if standalone. Otherwise this is the one for in Exponent apps.
-const callbackURL = 'host.exp.exponent://oauthredirect';
+const callbackURL = 'host.exp.exponent.oauth://redirect';
 
 app.listen(3000, () => {
   console.log('Twitter login app listening port 3000');
