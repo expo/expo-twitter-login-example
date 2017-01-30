@@ -1,18 +1,17 @@
 {
   "name": "twitter-login",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Hello Exponent!",
-  "author": null,
+  "author": "",
   "private": true,
   "main": "main.js",
   "dependencies": {
-    "exponent": "~12.0.3",
+    "exponent": "~13.0.0-rc.1",
     "@exponent/vector-icons": "~2.0.3",
-    "react": "~15.3.2",
-    "react-native": "git+https://github.com/exponentjs/react-native#sdk-13.0.0"
+    "react": "~15.4.2",
+    "react-native": "https://github.com/exponent/react-native/archive/sdk-13.0.1.tar.gz"
   },
   "devDependencies": {
-    "anf-scripts": "^0.3.0",
     "eslint": "^3.13.1",
     "eslint-config-anf": "^0.4.4"
   }

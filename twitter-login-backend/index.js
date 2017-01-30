@@ -1,7 +1,7 @@
 /* eslint-disable babel/new-cap, no-console */
 
 const express = require('express');
-const nodeFetch = require('node-fetch');
+const fetch = require('node-fetch');
 const Crypto = require('crypto-js');
 
 const app = express();
@@ -18,7 +18,7 @@ const baseURL = 'https://api.twitter.com';
 
 
  // Callback URL of your application, change if standalone. Otherwise this is the one for in Exponent apps.
-const callbackURL = 'host.exp.exponent://oauthredirect';
+const callbackURL = 'host.exp.exponent.oauth://redirect';
 
 app.listen(3000, () => {
   console.log('Twitter login app listening port 3000');
@@ -46,7 +46,7 @@ app.get('/redirect_url', (req, res) => {
   const callbackKeyValue = ', oauth_callback="' + encodeURIComponent(callbackURL) + '"';
   const tokenRequestHeader = headerString + callbackKeyValue;
   // Request
-  nodeFetch(tokenRequestURL, { method: 'POST', headers: { Authorization: tokenRequestHeader } })
+  fetch(tokenRequestURL, { method: 'POST', headers: { Authorization: tokenRequestHeader } })
     .then(response => {
       return response.text();
     }).then(response => {
@@ -81,7 +81,7 @@ app.get('/access_token', (req, res) => {
   const verifierKeyValue = ', oauth_verifier="' + encodeURIComponent(verifier) + '"';
   const accessTokenRequestHeader = accessTokenHeaderString + verifierKeyValue;
   // Convert token to Access Token
-  nodeFetch(accessTokenURL, { method: 'POST', headers: { Authorization: accessTokenRequestHeader } })
+  fetch(accessTokenURL, { method: 'POST', headers: { Authorization: accessTokenRequestHeader } })
   .then(response => {
     return response.text();
   }).then(response => {
