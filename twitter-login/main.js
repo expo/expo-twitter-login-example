@@ -28,7 +28,7 @@ class App extends React.Component {
     }).then(res => res.json());
     authToken = redirectURLResult.token;
     secretToken = redirectURLResult.secretToken;
-    const openBrowserResult = await Exponent.OAuth.openBrowserAsync(redirectURLResult.redirectURL);
+    const openBrowserResult = await Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
 
     if (openBrowserResult.type === 'cancel') {
       return;
