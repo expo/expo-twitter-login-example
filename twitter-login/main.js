@@ -1,11 +1,11 @@
 import Exponent from 'exponent';
 import React from 'react';
 import {
-  Alert,
   StyleSheet,
   Text,
   View,
   Button,
+  Linking,
 } from 'react-native';
 
 const redirectURLEndpoint = 'http://localhost:3000/redirect_url';
@@ -20,21 +20,22 @@ class App extends React.Component {
     username: undefined,
   };
 
-  _loginWithTwitter = async () => {
-    // Call your backend to get the redirect URL, Exponent will take care of redirecting the user.
-    const redirectURLResult = await fetch(redirectURLEndpoint, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    }).then(res => res.json());
-    authToken = redirectURLResult.token;
-    secretToken = redirectURLResult.secretToken;
-    const openBrowserResult = await Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
+  componentDidMount() {
+    Linking.addEventListener('url', this._handleTwitterRedirect);
+  }
 
-    if (openBrowserResult.type === 'cancel') {
-      return;
-    }
+  _handleTwitterRedirect = async (event) => {
+    // Parse the response query string into an object.
+    const [, queryString] = event.url.split('?');
+    const responseObj = queryString.split('&').reduce((map, pair) => {
+      const [key, value] = pair.split('=');
+      map[key] = value; // eslint-disable-line
+      return map;
+    }, {});
 
-    const verifier = openBrowserResult.response.oauth_verifier;
+
+    const verifier = responseObj.oauth_verifier;
+    console.log(verifier);
     const accessTokenURL = accessTokenEndpoint + this._toQueryString({
       oauth_verifier: verifier,
       oauth_token: authToken,
@@ -50,6 +51,39 @@ class App extends React.Component {
     const username = accessTokenResponse.screen_name;
 
     this.setState({ username });
+    Exponent.WebBrowser.dismissBrowser();
+  }
+
+  _loginWithTwitter = async () => {
+    // Call your backend to get the redirect URL, Exponent will take care of redirecting the user.
+    const redirectURLResult = await fetch(redirectURLEndpoint, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    }).then(res => res.json());
+    authToken = redirectURLResult.token;
+    secretToken = redirectURLResult.secretToken;
+    Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
+    // const openBrowserResult = await Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
+    // if (openBrowserResult.type === 'cancel') {
+    //   return;
+    // }
+    //
+    // const verifier = openBrowserResult.response.oauth_verifier;
+    // const accessTokenURL = accessTokenEndpoint + this._toQueryString({
+    //   oauth_verifier: verifier,
+    //   oauth_token: authToken,
+    //   oauth_token_secret: secretToken,
+    // });
+    //
+    // const accessTokenResult = await fetch(accessTokenURL, {
+    //   method: 'GET',
+    //   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    // }).then(res => res.json());
+    //
+    // const accessTokenResponse = accessTokenResult.accessTokenResponse;
+    // const username = accessTokenResponse.screen_name;
+    //
+    // this.setState({ username });
   };
 
   /**
