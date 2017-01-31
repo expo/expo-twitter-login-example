@@ -35,7 +35,6 @@ class App extends React.Component {
 
 
     const verifier = responseObj.oauth_verifier;
-    console.log(verifier);
     const accessTokenURL = accessTokenEndpoint + this._toQueryString({
       oauth_verifier: verifier,
       oauth_token: authToken,
@@ -63,28 +62,11 @@ class App extends React.Component {
     authToken = redirectURLResult.token;
     secretToken = redirectURLResult.secretToken;
     Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
-    // const openBrowserResult = await Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
-    // if (openBrowserResult.type === 'cancel') {
-    //   return;
-    // }
-    //
-    // const verifier = openBrowserResult.response.oauth_verifier;
-    // const accessTokenURL = accessTokenEndpoint + this._toQueryString({
-    //   oauth_verifier: verifier,
-    //   oauth_token: authToken,
-    //   oauth_token_secret: secretToken,
-    // });
-    //
-    // const accessTokenResult = await fetch(accessTokenURL, {
-    //   method: 'GET',
-    //   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    // }).then(res => res.json());
-    //
-    // const accessTokenResponse = accessTokenResult.accessTokenResponse;
-    // const username = accessTokenResponse.screen_name;
-    //
-    // this.setState({ username });
   };
+
+  _presentHackerNews = async () => {
+    Exponent.WebBrowser.openBrowserAsync('https://news.ycombinator.com');
+  }
 
   /**
    * Converts an object to a query string.
@@ -103,6 +85,8 @@ class App extends React.Component {
           <View>
             <Text style={styles.title}>Example: Twitter login</Text>
             <Button title="Login with Twitter" onPress={this._loginWithTwitter} />
+            <Text style={styles.title}> Example: Show WebBrowser </Text>
+            <Button title="Show HackerNews" onPress={this._presentHackerNews} />
           </View>
         }
       </View>
@@ -119,6 +103,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    textAlign: 'center',
+    marginTop: 40,
   },
 });
 
