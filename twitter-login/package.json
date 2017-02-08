@@ -6,7 +6,7 @@
   "private": true,
   "main": "main.js",
   "dependencies": {
-    "exponent": "~13.0.0-rc.1",
+    "exponent": "file:../../universe/libraries/exponent-sdk",
     "@exponent/vector-icons": "~2.0.3",
     "react": "~15.4.2",
     "react-native": "https://github.com/exponent/react-native/archive/sdk-13.0.1.tar.gz"

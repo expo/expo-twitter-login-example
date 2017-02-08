@@ -25,6 +25,10 @@ class App extends React.Component {
   }
 
   _handleTwitterRedirect = async (event) => {
+    if (!event.url.includes('+/redirect')) {
+      return;
+    }
+
     // Parse the response query string into an object.
     const [, queryString] = event.url.split('?');
     const responseObj = queryString.split('&').reduce((map, pair) => {
@@ -32,7 +36,6 @@ class App extends React.Component {
       map[key] = value; // eslint-disable-line
       return map;
     }, {});
-
 
     const verifier = responseObj.oauth_verifier;
     const accessTokenURL = accessTokenEndpoint + this._toQueryString({
@@ -61,11 +64,11 @@ class App extends React.Component {
     }).then(res => res.json());
     authToken = redirectURLResult.token;
     secretToken = redirectURLResult.secretToken;
-    Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
+    await Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
   };
 
   _presentHackerNews = async () => {
-    Exponent.WebBrowser.openBrowserAsync('https://news.ycombinator.com');
+    await Exponent.WebBrowser.openBrowserAsync('https://news.ycombinator.com');
   }
 
   /**
