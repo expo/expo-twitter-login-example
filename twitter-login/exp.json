@@ -1,9 +1,9 @@
 {
-  "name": "twitter-login",
-  "description": "Twitter login example",
-  "slug": "twitter-login",
+  "name": "exponent-twitter-login",
+  "description": "An example project demonstrating how to authenticate with Twitter using Exponent's WebBrowser module",
+  "slug": "exponent-twitter-login",
   "privacy": "public",
-  "sdkVersion": "UNVERSIONED",
+  "sdkVersion": "14.0.0",
   "version": "1.0.0",
   "orientation": "portrait",
   "primaryColor": "#cccccc",
