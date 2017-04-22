@@ -17,7 +17,8 @@ const accessURL = '/oauth/access_token';
 const baseURL = 'https://api.twitter.com';
 
 
- // Callback URL of your application, change if standalone. Otherwise this is the one for in Exponent apps.
+ // Change this to the Callback URL of your application (shown in the Expo XDE)
+ // Replace ':80+/redirect' with '/+/redirect'
 const callbackURL = 'exp://xe-rh9.janic.twitter-login.exp.direct:80+/redirect';
 
 app.listen(3000, () => {
