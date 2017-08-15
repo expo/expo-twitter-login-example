@@ -1,21 +1,16 @@
-import Exponent from 'exponent';
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  Button,
-  Linking,
-} from 'react-native';
+import Expo from 'expo';
+import { StyleSheet, Text, View, Button, Linking } from 'react-native';
 
 const redirectURLEndpoint = 'http://localhost:3000/redirect_url';
 const accessTokenEndpoint = 'http://localhost:3000/access_token';
+const callbackURLScheme = 'ExpoTwitterExample://';
 
 // Twitter tokens
 let authToken;
 let secretToken;
 
-class App extends React.Component {
+export default class App extends React.Component {
   state = {
     username: undefined,
   };
@@ -24,13 +19,9 @@ class App extends React.Component {
     Linking.addEventListener('url', this._handleTwitterRedirect);
   }
 
-  _handleTwitterRedirect = async (event) => {
-    if (!event.url.includes('+/redirect')) {
-      return;
-    }
-
+  _handleTwitterRedirect = async callbackURL => {
     // Parse the response query string into an object.
-    const [, queryString] = event.url.split('?');
+    const [, queryString] = callbackURL.split('?');
     const responseObj = queryString.split('&').reduce((map, pair) => {
       const [key, value] = pair.split('=');
       map[key] = value; // eslint-disable-line
@@ -38,11 +29,13 @@ class App extends React.Component {
     }, {});
 
     const verifier = responseObj.oauth_verifier;
-    const accessTokenURL = accessTokenEndpoint + this._toQueryString({
-      oauth_verifier: verifier,
-      oauth_token: authToken,
-      oauth_token_secret: secretToken,
-    });
+    const accessTokenURL =
+      accessTokenEndpoint +
+      this._toQueryString({
+        oauth_verifier: verifier,
+        oauth_token: authToken,
+        oauth_token_secret: secretToken,
+      });
 
     const accessTokenResult = await fetch(accessTokenURL, {
       method: 'GET',
@@ -53,8 +46,8 @@ class App extends React.Component {
     const username = accessTokenResponse.screen_name;
 
     this.setState({ username });
-    Exponent.WebBrowser.dismissBrowser();
-  }
+    Expo.WebBrowser.dismissBrowser();
+  };
 
   _loginWithTwitter = async () => {
     // Call your backend to get the redirect URL, Exponent will take care of redirecting the user.
@@ -64,34 +57,41 @@ class App extends React.Component {
     }).then(res => res.json());
     authToken = redirectURLResult.token;
     secretToken = redirectURLResult.secretToken;
-    await Exponent.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL);
+    let result = await Expo.WebBrowser.openBrowserAsync(redirectURLResult.redirectURL, {
+      callbackURLScheme: callbackURLScheme,
+    });
+    this._handleTwitterRedirect(result.url);
   };
 
   _presentHackerNews = async () => {
-    await Exponent.WebBrowser.openBrowserAsync('https://news.ycombinator.com');
-  }
+    await Expo.WebBrowser.openBrowserAsync('https://news.ycombinator.com', {});
+  };
 
   /**
    * Converts an object to a query string.
    */
   _toQueryString(params) {
-    return '?' + Object.entries(params)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join('&');
+    return (
+      '?' +
+      Object.entries(params)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&')
+    );
   }
 
   render() {
     return (
       <View style={styles.container}>
-        {this.state.username !== undefined ?
-          <Text style={styles.title}>Hi {this.state.username}!</Text> :
-          <View>
-            <Text style={styles.title}>Example: Twitter login</Text>
-            <Button title="Login with Twitter" onPress={this._loginWithTwitter} />
-            <Text style={styles.title}> Example: Show WebBrowser </Text>
-            <Button title="Show HackerNews" onPress={this._presentHackerNews} />
-          </View>
-        }
+        {this.state.username !== undefined
+          ? <Text style={styles.title}>
+              Hi {this.state.username}!
+            </Text>
+          : <View>
+              <Text style={styles.title}>Example: Twitter login</Text>
+              <Button title="Login with Twitter" onPress={this._loginWithTwitter} />
+              <Text style={styles.title}> Example: Show WebBrowser </Text>
+              <Button title="Show HackerNews" onPress={this._presentHackerNews} />
+            </View>}
       </View>
     );
   }
@@ -110,5 +110,3 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
 });
-
-Exponent.registerRootComponent(App);
